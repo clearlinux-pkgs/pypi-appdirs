@@ -14,11 +14,11 @@ Requires: pypi-appdirs-license = %{version}-%{release}
 Requires: pypi-appdirs-python = %{version}-%{release}
 Requires: pypi-appdirs-python3 = %{version}-%{release}
 BuildRequires : buildreq-distutils3
-BuildRequires : pluggy
+BuildRequires : pypi(pluggy)
 BuildRequires : py-python
 BuildRequires : pytest
 BuildRequires : tox
-BuildRequires : virtualenv
+BuildRequires : pypi(virtualenv)
 Provides: appdirs
 
 %description

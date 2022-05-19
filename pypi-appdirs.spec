@@ -4,12 +4,13 @@
 #
 Name     : pypi-appdirs
 Version  : 1.4.4
-Release  : 69
+Release  : 70
 URL      : https://files.pythonhosted.org/packages/d7/d8/05696357e0311f5b5c316d7b95f46c669dd9c15aaeecbb48c7d0aeb88c40/appdirs-1.4.4.tar.gz
 Source0  : https://files.pythonhosted.org/packages/d7/d8/05696357e0311f5b5c316d7b95f46c669dd9c15aaeecbb48c7d0aeb88c40/appdirs-1.4.4.tar.gz
 Summary  : A small Python module for determining appropriate platform-specific dirs, e.g. a "user data dir".
 Group    : Development/Tools
 License  : MIT
+Requires: pypi-appdirs-filemap = %{version}-%{release}
 Requires: pypi-appdirs-license = %{version}-%{release}
 Requires: pypi-appdirs-python = %{version}-%{release}
 Requires: pypi-appdirs-python3 = %{version}-%{release}
@@ -23,6 +24,14 @@ BuildRequires : pypi-virtualenv
 %description
 .. image:: https://secure.travis-ci.org/ActiveState/appdirs.png
 :target: http://travis-ci.org/ActiveState/appdirs
+
+%package filemap
+Summary: filemap components for the pypi-appdirs package.
+Group: Default
+
+%description filemap
+filemap components for the pypi-appdirs package.
+
 
 %package license
 Summary: license components for the pypi-appdirs package.
@@ -44,6 +53,7 @@ python components for the pypi-appdirs package.
 %package python3
 Summary: python3 components for the pypi-appdirs package.
 Group: Default
+Requires: pypi-appdirs-filemap = %{version}-%{release}
 Requires: python3-core
 Provides: pypi(appdirs)
 
@@ -54,13 +64,16 @@ python3 components for the pypi-appdirs package.
 %prep
 %setup -q -n appdirs-1.4.4
 cd %{_builddir}/appdirs-1.4.4
+pushd ..
+cp -a appdirs-1.4.4 buildavx2
+popd
 
 %build
 export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C.UTF-8
-export SOURCE_DATE_EPOCH=1649710351
+export SOURCE_DATE_EPOCH=1652992949
 export GCC_IGNORE_WERROR=1
 export CFLAGS="$CFLAGS -fno-lto "
 export FCFLAGS="$FFLAGS -fno-lto "
@@ -74,6 +87,15 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 PYTHONPATH=%{buildroot}$(python -c "import sys; print(sys.path[-1])") python setup.py test
+pushd ../buildavx2/
+export CFLAGS="$CFLAGS -m64 -march=x86-64-v3 -Wl,-z,x86-64-v3 "
+export CXXFLAGS="$CXXFLAGS -m64 -march=x86-64-v3 -Wl,-z,x86-64-v3 "
+export FFLAGS="$FFLAGS -m64 -march=x86-64-v3 -Wl,-z,x86-64-v3 "
+export FCFLAGS="$FCFLAGS -m64 -march=x86-64-v3 "
+export LDFLAGS="$LDFLAGS -m64 -march=x86-64-v3 "
+python3 setup.py build
+
+popd
 %install
 export MAKEFLAGS=%{?_smp_mflags}
 rm -rf %{buildroot}
@@ -83,9 +105,22 @@ python3 -tt setup.py build  install --root=%{buildroot}
 echo ----[ mark ]----
 cat %{buildroot}/usr/lib/python3*/site-packages/*/requires.txt || :
 echo ----[ mark ]----
+pushd ../buildavx2/
+export CFLAGS="$CFLAGS -m64 -march=x86-64-v3 -Wl,-z,x86-64-v3 "
+export CXXFLAGS="$CXXFLAGS -m64 -march=x86-64-v3 -Wl,-z,x86-64-v3 "
+export FFLAGS="$FFLAGS -m64 -march=x86-64-v3 -Wl,-z,x86-64-v3 "
+export FCFLAGS="$FCFLAGS -m64 -march=x86-64-v3 "
+export LDFLAGS="$LDFLAGS -m64 -march=x86-64-v3 "
+python3 -tt setup.py build install --root=%{buildroot}-v3
+popd
+/usr/bin/elf-move.py avx2 %{buildroot}-v3 %{buildroot}/usr/share/clear/optimized-elf/ %{buildroot}/usr/share/clear/filemap/filemap-%{name}
 
 %files
 %defattr(-,root,root,-)
+
+%files filemap
+%defattr(-,root,root,-)
+/usr/share/clear/filemap/filemap-pypi-appdirs
 
 %files license
 %defattr(0644,root,root,0755)
